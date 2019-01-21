@@ -27,9 +27,9 @@ extern "C" {
 
 
 
-extern unsigned char log_run_level;
- 
-extern const char * log_level_strings [];
+  extern unsigned char log_run_level;
+
+  extern const char *log_level_strings[];
 
 
 #ifndef LOG_FP
@@ -62,11 +62,10 @@ extern const char * log_level_strings [];
 #define LOG_CRITICAL(format, ...) if ( IS_LOGGING(LOG_LVL_CRITICAL) ) {\
   fprintf(LOG_FP,AT, log_level_strings[LOG_LVL_CRITICAL],  __func__, __LINE__) ;\
   fprintf (LOG_FP,format "\n",## __VA_ARGS__ ) ;};
-  
 
-#endif // __log_h__
+
+#endif                          // __log_h__
 
 #ifdef	__cplusplus
 }
-#endif 
-
+#endif
