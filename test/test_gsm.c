@@ -1,3 +1,5 @@
+#include <features.h>
+#include <time.h>
 #include <stdio.h>
 
 #include <wiringPi.h>
@@ -5,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdio.h>
@@ -13,12 +15,12 @@
 #include <unistd.h>
 #include <sys/reboot.h>
 #include <stdbool.h>
-#include <time.h>
 
 
 #include <fcntl.h>			//Used for UART
 #include <termios.h>		//Used for UART
 #include <unistd.h>			//Used for UART
+
 
 /*
 #include <asm-generic/termios.h>
@@ -36,24 +38,22 @@
 #include "log.h"
 
 
-//#define PR(...) printf(_ _VA_ARGS_ _)
-
-//#define debug(format, ...) fprintf (stderr, format, ## __VA_ARGS__)
-
 int gFD;			// variables connected with communication buffer
 
-  /*
+
+#if defined (__GLIBC__)
+
   void delay (unsigned int howLong)
 {
-  struct timespec sleeper, dummy ;
+   struct  timespec sleeper, dummy ;
+  
 
   sleeper.tv_sec  = (time_t)(howLong / 1000) ;
-  sleeper.tv_nsec = (long)(howLong % 1000) * 1000000 ;
-
+  sleeper.tv_nsec = (long)(howLong % 1000) * 1000000 ;          
   nanosleep (&sleeper, &dummy) ;
+  sleep(2L);
 }
-*/
-
+#endif
 /*
 * serialOpen:
 *	Open and initialise the serial port, setting all the right
@@ -94,7 +94,7 @@ int     status, fd ;
   fd = open (device, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
   if (fd == -1)
   {
-    LOG_WARNING(" Unable to open UART.  Ensure it is not in use by another application");
+    LOG_WARNING(" Unable to open UART.  Ensure it is not in use by another application", NULL);
 	 return -1 ;
   }
 	fcntl (fd, F_SETFL, O_RDWR) ;
@@ -143,6 +143,37 @@ void serialBegin(int baud)
 int main(int argc, char **argv)
 {
   LOG_NOTICE("Raspberry Pi alarm program %s started %s", "now", "!!!!");
+#ifdef _POSIX_SOURCE
+    printf("_POSIX_SOURCE defined\n");
+#endif
+
+#ifdef _POSIX_C_SOURCE
+    printf("_POSIX_C_SOURCE defined: %ldL\n", (long) _POSIX_C_SOURCE);
+#endif
+
+#ifdef _ISOC99_SOURCE
+    printf("_ISOC99_SOURCE defined\n");
+#endif
+
+#ifdef _ATFILE_SOURCE
+    printf("_ATFILE_SOURCE defined\n");
+#endif
+
+#ifdef _GNU_SOURCE
+    printf("_GNU_SOURCE defined\n");
+#endif
+
+#ifdef _REENTRANT
+    printf("_REENTRANT defined\n");
+#endif
+
+#ifdef _THREAD_SAFE
+    printf("_THREAD_SAFE defined\n");
+#endif
+
+#ifdef _FORTIFY_SOURCE
+    printf("_FORTIFY_SOURCE defined\n");
+#endif
 
 //PR("weight = %d, shipping = $%.2f\n", 10, 11.1);
 //debug ("A message %s", "ddd");
@@ -158,7 +189,7 @@ int main(int argc, char **argv)
   // Use  wiringPi pin 
   if (wiringPiSetup() == -1)
   {
-    LOG_CRITICAL("Wiring Pi Setup failed");
+    LOG_CRITICAL("Wiring Pi Setup failed", NULL);
     exit(1);
   }
 
@@ -203,6 +234,8 @@ int main(int argc, char **argv)
 
 	if (gFD != -1) 
 	{
+  //  while (true)
+    {
 		// Read up to 255 characters from the port if they are there
 		unsigned char rx_buffer[256];
 		int rx_length = read(gFD, (void*)rx_buffer, 255);		//Filestream, buffer to store in, number of bytes to read (max)
@@ -222,9 +255,11 @@ int main(int argc, char **argv)
       
 			//Bytes received
 			rx_buffer[rx_length] = '\0';
-			printf("%i bytes read%X\n", rx_length, rx_buffer);
+      rx_buffer[rx_length+1] = '\0';
+			printf("%i bytes read:%X\n", rx_length, rx_buffer);
      // LOG_LOG("%s",rx_buffer);
 		}
+    }
 	}
 
  

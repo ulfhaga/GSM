@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I. -I../src -DTRACE -g  -std=c11
+CFLAGS=-I. -I../src -DTRACE -g -std=gnu11 -pedantic
 #CFLAGS=-I. -I../src -D DEBUG -DTEST -g 
 #CFLAGS=-I. -I../src 
 SOURCE=test_gsm.c log.c
