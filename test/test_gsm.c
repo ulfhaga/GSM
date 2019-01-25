@@ -125,13 +125,13 @@ int serialOpen(char *device, int baud)
   fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
   if (fd == -1)
   {
-    LOG_WARNING
+    LOG_WARNING_F
       (" Unable to open UART.  Ensure it is not in use by another application",
        NULL);
     return -1;
   }
 
-  LOG_LOG("Baud rate %i", myBaud);
+  LOG_DEBUG_F("Baud rate %i", myBaud);
   fcntl(fd, F_SETFL, O_RDWR);
   tcgetattr(fd, &options);
   cfmakeraw(&options);
@@ -176,7 +176,7 @@ void serialBegin(int baud)
 
 int main(int argc, char **argv)
 {
-  LOG_NOTICE("Raspberry Pi alarm program %s started %s", "now", "!!!!");
+  LOG_INFO_F("Raspberry Pi alarm program %s started %s", "now", "!!!!");
 #ifdef _POSIX_SOURCE
   printf("_POSIX_SOURCE defined\n");
 #endif
@@ -213,9 +213,9 @@ int main(int argc, char **argv)
 //debug ("A message %s", "ddd");
 
 #ifdef DEBUG
-  printf("Debug run\n");
+  LOG_DEBUG("Debug run");
 #else
-  printf("Release run\n");
+  LOG_DEBUG("Release run");
 #endif
 
   int status = 1;
@@ -223,7 +223,7 @@ int main(int argc, char **argv)
   // Use  wiringPi pin 
   if (wiringPiSetup() == -1)
   {
-    LOG_CRITICAL("Wiring Pi Setup failed", NULL);
+    LOG_ERROR_F("Wiring Pi Setup failed", NULL);
     exit(1);
   }
 
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
   if (gFD != -1)
   {
     int len = p_tx_buffer - &tx_buffer[0];
-    LOG_NOTICE("Write to GSM length:%i", len);
+    LOG_INFO_F("Write to GSM length:%i", len);
     int count = write(gFD, &tx_buffer[0], len); //Filestream, bytes to write, number of bytes to write
     if (count < 0)
     {
@@ -292,9 +292,9 @@ int main(int argc, char **argv)
         rx_buffer[rx_length] = '\0';
         rx_buffer[rx_length + 1] = '\0';
         printf("%i bytes read: %s\n", rx_length, &rx_buffer[0]);
-        LOG_LOG("0:   %c",rx_buffer[0]);
-        LOG_LOG("1:   %c",&rx_buffer[0]);
-        LOG_LOG("last:   %c",&rx_buffer[rx_length-1]);
+        LOG_INFO_F("0:   %c",rx_buffer[0]);
+        LOG_INFO_F("1:   %c",&rx_buffer[0]);
+        LOG_INFO_F("last:   %c",&rx_buffer[rx_length-1]);
         
         unsigned char  first = rx_buffer[0];
         
