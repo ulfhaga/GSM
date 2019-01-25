@@ -49,7 +49,6 @@ void delay(unsigned int howLong)
   sleeper.tv_sec = (time_t) (howLong / 1000);
   sleeper.tv_nsec = (long) (howLong % 1000) * 1000000;
   nanosleep(&sleeper, &dummy);
-  sleep(2L);
 }
 #endif
 /*
@@ -131,6 +130,8 @@ int serialOpen(char *device, int baud)
        NULL);
     return -1;
   }
+
+  LOG_LOG("Baud rate %i", myBaud);
   fcntl(fd, F_SETFL, O_RDWR);
   tcgetattr(fd, &options);
   cfmakeraw(&options);
@@ -150,6 +151,8 @@ int serialOpen(char *device, int baud)
 
   tcflush(fd, TCIFLUSH);
   tcsetattr(fd, TCSANOW | TCSAFLUSH, &options);
+  
+  
   //  ioctl (fd, TIOCMGET, &status);
   //status |= TIOCM_DTR ;
   //status |= TIOCM_RTS ;
@@ -226,12 +229,13 @@ int main(int argc, char **argv)
 
 
   serialBegin(115200);
-
+  
 // Transmitt
 //----- TX BYTES -----
   unsigned char tx_buffer[20];
   unsigned char *p_tx_buffer;
 
+ //Sets the GSM Module in Text Mode
   p_tx_buffer = &tx_buffer[0];
   *p_tx_buffer++ = 'A';
   *p_tx_buffer++ = 'T';
@@ -268,7 +272,7 @@ int main(int argc, char **argv)
     //  while (true)
     {
       // Read up to 255 characters from the port if they are there
-      unsigned char rx_buffer[256];
+      unsigned char rx_buffer[256] = { 0 };
       int rx_length = read(gFD, (void *) rx_buffer, 255);       //Filestream, buffer to store in, number of bytes to read (max)
       if (rx_length < 0)
       {
@@ -283,12 +287,19 @@ int main(int argc, char **argv)
       }
       else
       {
-
+        delay(1000);
         //Bytes received
         rx_buffer[rx_length] = '\0';
         rx_buffer[rx_length + 1] = '\0';
-        printf("%i bytes read:%X\n", rx_length, rx_buffer);
-        // LOG_LOG("%s",rx_buffer);
+        printf("%i bytes read: %s\n", rx_length, &rx_buffer[0]);
+        LOG_LOG("0:   %c",rx_buffer[0]);
+        LOG_LOG("1:   %c",&rx_buffer[0]);
+        LOG_LOG("last:   %c",&rx_buffer[rx_length-1]);
+        
+        unsigned char  first = rx_buffer[0];
+        
+        printf("%c",first);
+         
       }
     }
   }

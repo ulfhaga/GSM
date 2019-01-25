@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I. -I../src -DTRACE -g -std=gnu11 -pedantic
+CFLAGS=-I. -I../src -DTRACE -g -std=gnu11 -pedantic 
 #CFLAGS=-I. -I../src -D DEBUG -DTEST -g 
 #CFLAGS=-I. -I../src 
 SOURCE=test_gsm.c log.c
@@ -9,7 +9,7 @@ LDFLAGS = -Wl,-rpath=${PWD}/../src  -L${PWD}/../src -lwiringPi -lquickmail  -lsi
 LINT=cppcheck --language=c --enable=warning,style,unusedFunction,information --template=gcc 
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) 
 
     
 test_gsm_tests: $(OBJ)
