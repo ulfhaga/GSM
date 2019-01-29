@@ -125,9 +125,7 @@ int serialOpen(char *device, int baud)
   fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
   if (fd == -1)
   {
-    LOG_WARNING_F
-      (" Unable to open UART.  Ensure it is not in use by another application",
-       NULL);
+    LOG_WARNING(" Unable to open UART.  Ensure it is not in use by another application");
     return -1;
   }
 
@@ -151,8 +149,8 @@ int serialOpen(char *device, int baud)
 
   tcflush(fd, TCIFLUSH);
   tcsetattr(fd, TCSANOW | TCSAFLUSH, &options);
-  
-  
+
+
   //  ioctl (fd, TIOCMGET, &status);
   //status |= TIOCM_DTR ;
   //status |= TIOCM_RTS ;
@@ -172,41 +170,39 @@ void serialBegin(int baud)
 
 
 
-
-
 int main(int argc, char **argv)
 {
   LOG_INFO_F("Raspberry Pi alarm program %s started %s", "now", "!!!!");
 #ifdef _POSIX_SOURCE
-  printf("_POSIX_SOURCE defined\n");
+  LOG_DEBUG("_POSIX_SOURCE defined");
 #endif
 
 #ifdef _POSIX_C_SOURCE
-  printf("_POSIX_C_SOURCE defined: %ldL\n", (long) _POSIX_C_SOURCE);
+  LOG_DEBUG_F("_POSIX_C_SOURCE defined: %ldL", (long) _POSIX_C_SOURCE);
 #endif
 
 #ifdef _ISOC99_SOURCE
-  printf("_ISOC99_SOURCE defined\n");
+  LOG_DEBUG("_ISOC99_SOURCE defined");
 #endif
 
 #ifdef _ATFILE_SOURCE
-  printf("_ATFILE_SOURCE defined\n");
+  LOG_DEBUG("_ATFILE_SOURCE defined");
 #endif
 
 #ifdef _GNU_SOURCE
-  printf("_GNU_SOURCE defined\n");
+  LOG_DEBUG("_GNU_SOURCE defined");
 #endif
 
 #ifdef _REENTRANT
-  printf("_REENTRANT defined\n");
+  LOG_DEBUG("_REENTRANT defined");
 #endif
 
 #ifdef _THREAD_SAFE
-  printf("_THREAD_SAFE defined\n");
+  LOG_DEBUG("_THREAD_SAFE defined");
 #endif
 
 #ifdef _FORTIFY_SOURCE
-  printf("_FORTIFY_SOURCE defined\n");
+  LOG_DEBUG("_FORTIFY_SOURCE defined");
 #endif
 
 //PR("weight = %d, shipping = $%.2f\n", 10, 11.1);
@@ -223,19 +219,19 @@ int main(int argc, char **argv)
   // Use  wiringPi pin 
   if (wiringPiSetup() == -1)
   {
-    LOG_ERROR_F("Wiring Pi Setup failed", NULL);
+    LOG_ERROR("Wiring Pi Setup failed");
     exit(1);
   }
 
 
   serialBegin(115200);
-  
+
 // Transmitt
 //----- TX BYTES -----
   unsigned char tx_buffer[20];
   unsigned char *p_tx_buffer;
 
- //Sets the GSM Module in Text Mode
+  //Sets the GSM Module in Text Mode
   p_tx_buffer = &tx_buffer[0];
   *p_tx_buffer++ = 'A';
   *p_tx_buffer++ = 'T';
@@ -245,7 +241,7 @@ int main(int argc, char **argv)
   *p_tx_buffer++ = 'G';
   *p_tx_buffer++ = 'F';
   *p_tx_buffer++ = '=';
-  *p_tx_buffer++ = '?';
+  *p_tx_buffer++ = '1';
   *p_tx_buffer++ = '\r';
 
 
@@ -257,19 +253,18 @@ int main(int argc, char **argv)
     int count = write(gFD, &tx_buffer[0], len); //Filestream, bytes to write, number of bytes to write
     if (count < 0)
     {
-      printf("UART TX error\n");
+      LOG_DEBUG("UART TX error\n");
     }
   }
 
-  int sleep = 1;
-  wait(&sleep);
 
 //----- CHECK FOR ANY RX BYTES -----
 
 
   if (gFD != -1)
   {
-    //  while (true)
+    delay(1000);
+    while (true)
     {
       // Read up to 255 characters from the port if they are there
       unsigned char rx_buffer[256] = { 0 };
@@ -277,34 +272,42 @@ int main(int argc, char **argv)
       if (rx_length < 0)
       {
         //An error occured (will occur if there are no bytes)
-        printf("No bytes\n");
+        LOG_INFO("No bytes");
 
       }
-      else if (rx_length == 0)
+      else 
+        if (rx_length == 0)
       {
         //No data waiting
-        printf("No data waiting\n");
+        LOG_INFO("No data waiting");
+        break;
       }
       else
       {
         delay(1000);
         //Bytes received
+        LOG_INFO_F("%i bytes read: %s\n", rx_length, &rx_buffer[0]);
+        break;
+    
+        /*
         rx_buffer[rx_length] = '\0';
         rx_buffer[rx_length + 1] = '\0';
         printf("%i bytes read: %s\n", rx_length, &rx_buffer[0]);
-        LOG_INFO_F("0:   %c",rx_buffer[0]);
-        LOG_INFO_F("1:   %c",&rx_buffer[0]);
-        LOG_INFO_F("last:   %c",&rx_buffer[rx_length-1]);
-        
-        unsigned char  first = rx_buffer[0];
-        
-        printf("%c",first);
-         
+        LOG_INFO_F("0:   %c", rx_buffer[0]);
+        LOG_INFO_F("1:   %c", &rx_buffer[0]);
+        LOG_INFO_F("last:   %c", &rx_buffer[rx_length - 1]);
+
+        unsigned char first = rx_buffer[0];
+
+        printf("%c", first);
+         */
+
       }
-    }
+      break;
+    }                           // while
   }
 
 
-  foo();
+  //foo();
   return 0;
 }

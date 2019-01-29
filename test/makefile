@@ -3,6 +3,7 @@ CFLAGS=-I. -I../src -DTRACE -g -std=gnu11 -pedantic
 #CFLAGS=-I. -I../src -D DEBUG -DTEST -g 
 #CFLAGS=-I. -I../src 
 SOURCE=test_gsm.c log.c
+DEPS=log.h
 export ROOT_DIR=${PWD}
 OBJ= test_gsm.o log.o
 LDFLAGS = -Wl,-rpath=${PWD}/../src  -L${PWD}/../src -lwiringPi -lquickmail  -lsim800l
@@ -10,6 +11,8 @@ LINT=cppcheck --language=c --enable=warning,style,unusedFunction,information --t
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS) 
+
+
 
     
 test_gsm_tests: $(OBJ)
@@ -27,7 +30,7 @@ indent:
 		
 .PHONY: lint
 lint :
-	$(LINT) $(SOURCE) 
+	$(LINT) $(SOURCE)  -D
 
 .PHONY: test
 test: test_gsm_tests
