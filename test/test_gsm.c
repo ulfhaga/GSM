@@ -169,10 +169,8 @@ void serialBegin(int baud)
 }
 
 
-
-int main(int argc, char **argv)
+void features_test()
 {
-  LOG_INFO_F("Raspberry Pi alarm program %s started %s", "now", "!!!!");
 #ifdef _POSIX_SOURCE
   LOG_DEBUG("_POSIX_SOURCE defined");
 #endif
@@ -204,9 +202,13 @@ int main(int argc, char **argv)
 #ifdef _FORTIFY_SOURCE
   LOG_DEBUG("_FORTIFY_SOURCE defined");
 #endif
+  
+}
 
-//PR("weight = %d, shipping = $%.2f\n", 10, 11.1);
-//debug ("A message %s", "ddd");
+int main(int argc, char **argv)
+{
+  LOG_INFO_F("Raspberry Pi alarm program %s started %s", "now", "!!!!");
+  
 
 #ifdef DEBUG
   LOG_DEBUG("Debug run");
@@ -228,10 +230,12 @@ int main(int argc, char **argv)
 
 // Transmitt
 //----- TX BYTES -----
-  unsigned char tx_buffer[20];
+  unsigned char tx_buffer[20]= { 0 };
   unsigned char *p_tx_buffer;
 
+
   //Sets the GSM Module in Text Mode
+
   p_tx_buffer = &tx_buffer[0];
   *p_tx_buffer++ = 'A';
   *p_tx_buffer++ = 'T';
@@ -249,6 +253,7 @@ int main(int argc, char **argv)
   if (gFD != -1)
   {
     int len = p_tx_buffer - &tx_buffer[0];
+    //int len = sizeof(tx_buffer);
     LOG_INFO_F("Write to GSM length:%i", len);
     int count = write(gFD, &tx_buffer[0], len); //Filestream, bytes to write, number of bytes to write
     if (count < 0)
@@ -284,9 +289,9 @@ int main(int argc, char **argv)
       }
       else
       {
-        delay(1000);
+       // delay(1000);
         //Bytes received
-        LOG_INFO_F("%i bytes read: %s\n", rx_length, &rx_buffer[0]);
+        LOG_INFO_F("%i bytes read:%s:\n", rx_length, &rx_buffer[0]);
         break;
     
         /*
