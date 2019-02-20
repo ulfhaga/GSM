@@ -30,7 +30,7 @@ indent:
 		
 .PHONY: lint
 lint :
-	$(LINT) $(SOURCE)  -D
+	$(LINT) $(SOURCE) 
 
 .PHONY: test
 test: test_gsm_tests

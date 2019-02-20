@@ -23,9 +23,9 @@ extern "C" {
 
 
 #ifdef DEBUG
-#define LOG_BUILD_LEVEL LOG_LVL_DEBUG
+#define LOG_BUILD_LEVEL LOG_LVL_TRACE
 #else
-#define LOG_BUILD_LEVEL LOG_LVL_DEBUG
+#define LOG_BUILD_LEVEL LOG_LVL_TRACE
 #endif
 
 

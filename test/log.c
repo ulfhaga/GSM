@@ -1,6 +1,6 @@
 #include "log.h"
 
-unsigned char log_run_level = LOG_LVL_DEBUG;
+unsigned char log_run_level = LOG_LVL_TRACE;
 
 const char *log_level_strings[] = {
   "NONE",                       // 0
