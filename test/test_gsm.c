@@ -69,7 +69,9 @@ enum comm_line_status_enum {
 
 
 int setInTextMode();
-int reportingMode();
+bool reportingMode();
+int setGsmMode();
+bool networkRegistration();
 
 char SendSMS(char *number_str, char *message_str);
 
@@ -272,23 +274,38 @@ int main(int argc, char **argv)
 
   serialBegin(115200);
   SetCommLineStatus(CLS_FREE);
+  
 
-reportingMode();
+  if (reportingMode() == false)
+  {
+        LOG_ERROR("Setting in report mode failed. ");
+        exit(1);
+  }
+   
+  
+  if (networkRegistration() == false)
+  {
+        LOG_ERROR("Network is not registrated.");
+        exit(1);
+  }
+  
   setInTextMode();
+  setGsmMode();
 
   /*while (wait_response("OK") == false)
-  {
-    delay(1000);
-  }
-  * */
+     {
+     delay(1000);
+     }
+     * */
 
-  SendSMS("0046706339413", "Hello");
+  //SendSMS("+46706339413", "Hello");
+    SendSMS("0706339413", "Hello");
   return 0;
 }
 
 int setInTextMode()
 {
-   LOG_DEBUG("Begin setInTextMode");
+  LOG_DEBUG("Begin setInTextMode");
 // Transmitt
 //----- TX BYTES -----
   //unsigned char tx_buffer[]="AT+CMGF=1";
@@ -330,7 +347,7 @@ int setInTextMode()
        }
      */
 
- LOG_DEBUG("End setInTextMode");
+    LOG_DEBUG("End setInTextMode");
   }
 
 
@@ -368,11 +385,28 @@ int setInTextMode()
   return 0;
 }
 
-int reportingMode()
+bool reportingMode()
 {
   LOG_DEBUG("Begin reportingMode");
   char *u_buffer = "AT+CMEE=2";
-  LOG_INFO_F("Send %s",u_buffer);
+  LOG_INFO_F("Send %s", u_buffer);
+
+  if (gFD != -1)
+  {
+    int len = strlen(u_buffer);
+    LOG_INFO_F("Write to GSM length:%i", len);
+    serialPuts(u_buffer);
+  }
+  bool isReportingMode = wait_response("OK");
+  LOG_DEBUG("End reportingMode");
+  return isReportingMode;
+}
+
+int setGsmMode()
+{
+  LOG_DEBUG("Begin GSMMode");
+  char *u_buffer = "AT+CSCS=\"GSM\"";
+  LOG_INFO_F("Send %s", u_buffer);
 
   if (gFD != -1)
   {
@@ -381,8 +415,26 @@ int reportingMode()
     serialPuts(u_buffer);
   }
   wait_response("OK");
-  LOG_DEBUG("End reportingMode");
+  LOG_DEBUG("End GSMMode");
   return 0;
+}
+
+bool networkRegistration()
+{
+LOG_DEBUG("Begin networkRegistration");
+  char *u_buffer = "AT+CREG?";
+  LOG_INFO_F("Send %s", u_buffer);
+
+  if (gFD != -1)
+  {
+    int len = strlen(u_buffer);
+    LOG_INFO_F("Write to GSM length:%i", len);
+    serialPuts(u_buffer);
+  }
+  bool isNetworkRegistrated= wait_response("CREG");
+  LOG_DEBUG("End networkRegistration");
+  return isNetworkRegistrated;
+  
 }
 
 bool wait_response(char *expectedResponse)
@@ -394,12 +446,15 @@ bool wait_response(char *expectedResponse)
   {
 
 
-    bool status = true; 
+    bool status = true;
     do
     {
       loop++;
-      if (loop > 3)
+      if (loop > 30)
       {
+         LOG_INFO("No bytes received. ");
+          ret = false;
+          status = false;
         break;
       }
       delay(1000);
@@ -410,18 +465,17 @@ bool wait_response(char *expectedResponse)
       {
         //An error occured (will occur if there are no bytes)
         LOG_INFO("No bytes more");
-
-        status = false;
       }
       else if (rx_length == 0)
       {
         //No data waiting
-        LOG_INFO("No data waiting");
+        LOG_INFO("No more data waiting. ");
         if (strstr(message, expectedResponse) != NULL)
         {
           ret = true;
+          LOG_INFO_F("Data match %s. Data is %s:\n", expectedResponse, message);
         }
-        status = false;
+        //status = false;
 
       }
       else
@@ -461,8 +515,8 @@ char SendSMS(char *number_str, char *message_str)
 {
   char ret_val = -1;
   byte i;
-  
-    LOG_TRACE("Begin SendSMS");
+
+  LOG_TRACE("Begin SendSMS");
 
   if (CLS_FREE != GetCommLineStatus())
     return (ret_val);
@@ -480,49 +534,66 @@ char SendSMS(char *number_str, char *message_str)
     // serialPuts1(number_str);
     // serialPuts1("\"\r");
     delay(5000);
-    LOG_DEBUG("Send AT+CMGS=?");
-    serialPuts1("AT+CMGS=?");
-    delay(1);
-    write(gFD, "\r", 1);
-    while (wait_response("OK") == false)
-    {
-      LOG_DEBUG("Wait again for AT+CMGS=?");
 
-      delay(1000);
-      serialPuts1("AT+CMGS=?");
-      write(gFD, "\r", 1);
-    }
+    /*
+       LOG_DEBUG("Send AT+CMGS=?");
+       serialPuts1("AT+CMGS=?");
+       delay(1);
+       write(gFD, "\r", 1);
+       while (wait_response("OK") == false)
+       {
+       LOG_DEBUG("Wait again for AT+CMGS=?");
 
+       delay(1000);
+       serialPuts1("AT+CMGS=?");
+       write(gFD, "\r", 1);
+       }
+     */
 
     LOG_DEBUG_F("Send SMS Message number:%s   message:%s", number_str,
                 message_str);
 
-    serialPuts1("AT+CMGS=\"0706339413\"");
-    write(gFD, "\r", 1);
-    delay(100);
+    serialPuts("AT+CMGS=\"0706339413\"");
+  //  write(gFD, "\n", 1);
+    delay(1000);
+
+    bool resp = wait_response("CMGS");
+    while (resp == false)
+    {
+      delay(1000);
+      LOG_DEBUG("Wait for a AT+CMGS .");
+      resp = wait_response("CMGS");
+    }
+
+    if (resp == true)
+    {
+      LOG_DEBUG("Received a CMGS");
+    }
+
+
 
     /*while (wait_response("AT") == false){
        LOG_DEBUG("Wait again 1");
        delay(1000);
        }
        * */
-
+    delay(2000);
     serialPuts1(message_str);
-    delay(100);
+    delay(10);
     // serialPuts1("\x1A");
     write(gFD, "\x1A", 1);
-   //  write(gFD,"\r",1);
+    //  write(gFD,"\r",1);
 
-LOG_DEBUG("SMS sent! Waiting for response.");
-    
-    bool resp = wait_response("CMGS");
+
+
+    resp = wait_response("OK");
     while (resp == false)
     {
       delay(1000);
-      LOG_DEBUG("Wait again tel ok");
-      resp = wait_response("CMGS");
+      LOG_DEBUG("Wait for a successful sending.");
+      resp = wait_response("OK");
     }
-    
+
     if (resp == true)
     {
       LOG_DEBUG("SMS sent successful!!!!!!!!!!!!!!!!!");
@@ -544,10 +615,10 @@ LOG_DEBUG("SMS sent! Waiting for response.");
 
     //ulf if (RX_FINISHED_STR_RECV == WaitRespAdd(1000, 50, ">")) 
     //delay(5000);
-  //  {
-      // send SMS text
-      //  LOG_DEBUG_F("Send number:%s   message:%s", number_str, message_str);
-      //  serialPuts(message_str);
+    //  {
+    // send SMS text
+    //  LOG_DEBUG_F("Send number:%s   message:%s", number_str, message_str);
+    //  serialPuts(message_str);
 /*
 //#ifdef DEBUG_SMS_ENABLED
 	// SMS will not be sent = we will not pay => good for debugging
